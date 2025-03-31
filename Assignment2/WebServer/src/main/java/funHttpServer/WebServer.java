@@ -130,7 +130,7 @@ class WebServer {
         StringBuilder builder = new StringBuilder();
         // NOTE: output from buffer is at the end
 
-        if (request.length() == 0) {
+        if (request.length() == 0) { // 200 OK
           // shows the default directory page
 
           // opens the root.html file
@@ -144,7 +144,7 @@ class WebServer {
           builder.append("\n");
           builder.append(page);
 
-        } else if (request.equalsIgnoreCase("json")) {
+        } else if (request.equalsIgnoreCase("json")) { // 200 OK
           // shows the JSON of a random image and sets the header name for that image
 
           // pick a index from the map
@@ -163,7 +163,7 @@ class WebServer {
           builder.append("\"image\":\"").append(url).append("\"");
           builder.append("}");
 
-        } else if (request.equalsIgnoreCase("random")) {
+        } else if (request.equalsIgnoreCase("random")) { // 200 OK
           // opens the random image page
 
           // open the index.html
@@ -175,7 +175,7 @@ class WebServer {
           builder.append("\n");
           builder.append(new String(readFileInBytes(file)));
 
-        } else if (request.contains("file/")) {
+        } else if (request.contains("file/")) { // 200 OK
           // tries to find the specified file and shows it or shows an error
 
           // take the path and clean it. try to open the file
@@ -201,22 +201,36 @@ class WebServer {
           // extract path parameters
           query_pairs = splitQuery(request.replace("multiply?", ""));
 
-          // extract required fields from parameters
-          Integer num1 = Integer.parseInt(query_pairs.get("num1"));
-          Integer num2 = Integer.parseInt(query_pairs.get("num2"));
-
-          // do math
-          Integer result = num1 * num2;
-
-          // Generate response
-          builder.append("HTTP/1.1 200 OK\n");
-          builder.append("Content-Type: text/html; charset=utf-8\n");
-          builder.append("\n");
-          builder.append("Result is: " + result);
-
           // TODO: Include error handling here with a correct error code and
           // a response that makes sense
+          if (!query_pairs.containsKey("num1") || !query_pairs.containsKey("num2")) {
+            builder.append("HTTP/1.1 400 Bad Request\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Error: Both num1 and num2 parameters are required");
+          }
+          else {
+            try {
+              // attempt to parse nums
+              Integer num1 = Integer.parseInt(query_pairs.get("num1"));
+              Integer num2 = Integer.parseInt(query_pairs.get("num2"));
 
+              // math
+              Integer result = num1 * num2;
+
+              // success response
+              builder.append("HTTP/1.1 200 OK\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("Result is: " + result);
+            } catch (Exception e) {
+              // handle invalid
+              builder.append("HTTP/1.1 400 Bad Request\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("Error: num1 and num2 must be valid integers");
+            }
+          }
         } else if (request.contains("github?")) {
           // pulls the query from the request and runs it with GitHub's REST API
           // check out https://docs.github.com/rest/reference/
@@ -228,16 +242,136 @@ class WebServer {
 
           Map<String, String> query_pairs = new LinkedHashMap<String, String>();
           query_pairs = splitQuery(request.replace("github?", ""));
-          String json = fetchURL("https://api.github.com/" + query_pairs.get("query"));
-          System.out.println(json);
+          
+          // check for required query param
+          if (!query_pairs.containsKey("query")) {
+            builder.append("HTTP/1.1 400 Bad Request\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Error: Missing 'query' parameter");
+          } else {
+            String query = query_pairs.get("query");
+            String url = "https://api.github.com/" + query;
 
-          builder.append("HTTP/1.1 200 OK\n");
-          builder.append("Content-Type: text/html; charset=utf-8\n");
-          builder.append("\n");
-          builder.append("Check the todos mentioned in the Java source file");
-          // TODO: Parse the JSON returned by your fetch and create an appropriate
-          // response based on what the assignment document asks for
+            try {
+              String jsonResponse = fetchURL(url);
 
+              try {
+                // try to parse as JSON array
+                JSONArray repos = new JSONArray(jsonResponse);
+                builder.append("HTTP/1.1 200 OK\n");
+                builder.append("Content-Type: text/html; charset=utf-8\n");
+                builder.append("\n");
+                builder.append("<html><body>");
+                builder.append("<h1>GitHub Repositories</h1>");
+                builder.append("<ul>");
+
+                for (int i = 0; i < repos.length(); i++) {
+                  JSONObject repo = repos.getJSONObject(i);
+                  String fullName = repo.getString("full_name");
+                  int id = repo.getInt("id");
+                  String ownerLogin = repo.getJSONObject("owner").getString("login");
+
+                  // build
+                  builder.append("<li>")
+                         .append(fullName)
+                         .append(" (ID: ").append(id)
+                         .append(", Owner: ").append(ownerLogin)
+                         .append(")</li>");
+                }
+                builder.append("</ul></body></html>");
+              } catch (JSONException e) { // handle GitHub api errors
+                JSONObject error = new JSONObject(jsonResponse);
+                String message = error.optString("message", "Unknown error from GitHub");
+                builder.append("HTTP/1.1 404 Not Found\n");
+                builder.append("Content-Type: text/html; charset=utf-8\n");
+                builder.append("\n");
+                builder.append("GitHub Error: ").append(message);
+              }
+            } catch (Exception e) { // handle network/connection errors
+              // failure
+              builder.append("HTTP/1.1 404 Not Found\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("File not found: " + file);
+            }
+          }
+        } else if (request.contains("bmi?")) { // 2.6.3
+          // BMI Calculator : given weight (lb) and height (in)
+          Map<String, String> query_pairs = splitQuery(request.replace("bmi?", ""));
+
+          // initial if exists check
+          if (!query_pairs.containsKey("weight") || !query_pairs.containsKey("height")) {
+            builder.append("HTTP/1.1 400 Bad Request\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Error: Both weight (lbs) and height (inches) parameters are required");
+          } else {
+            try {
+              // parse inputs
+              double weightLb = Double.parseDouble(query_pairs.get("weight"));
+              double heightIn = Double.parseDouble(query_pairs.get("height"));
+
+              // validity check
+              if (heightIn <= 0 || weightLb <= 0) {
+                builder.append("HTTP/1.1 400 Bad Request\n");
+                builder.append("Content-Type: text/html; charset=utf-8\n");
+                builder.append("\n");
+                builder.append("Error: Height and weight must be greater than 0");
+              } else {
+                // BMI formula
+                // (weight lb / (height in)^2) * 703
+                double bmi = (weightLb / (heightIn * heightIn)) * 703;
+                String category = "x"; // placeholder
+
+                // categorize by bmi
+                if (bmi < 18.5) {
+                  category = "Underweight";
+                } else if (bmi < 25) {
+                  category = "Normal";
+                } else if (bmi < 30) {
+                  category = "Overweight";
+                } else {
+                  category = "Obese";
+                }
+
+                builder.append("HTTP/1.1 200 OK\n");
+                builder.append("Content-Type: text/html; charset=utf-8\n");
+                builder.append("\n");
+                builder.append(String.format("BMI: %.1f (%s) [Weight: %.1f lbs, Height: %.1f inches]", bmi, category, weightLb, heightIn));
+              }
+            } catch (NumberFormatException e) {
+              // invalid weight\height input
+              builder.append("HTTP/1.1 400 Bad Request\n");
+              uilder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("Error: Invalid numeric values for weight (lbs) or height (inches)");
+            }
+          }
+
+        } else if (request.contains("concat?")) { // 2.6.3 
+          // String concatenation w/ separator
+          Map<String, String> query_pairs = splitQuery(request.replace("concat?", ""));
+
+          if (!query_pairs.containsKey("str1") || !query_pairs.containsKey("str2")) {
+            // initial if exists check
+            builder.append("HTTP/1.1 400 Bad Request\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Error: Both str1 and str2 parameters are required");
+          } else {
+            String str1 = query_pairs.get("str1");
+            String str2 = query_pairs.get("str2");
+            String separator = query_pairs.getOrDefault("separator", "");
+        
+            builder.append("HTTP/1.1 200 OK\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Result: ")
+                   .append(str1)
+                   .append(separator)
+                   .append(str2);
+          }
         } else {
           // if the request is not recognized at all
 

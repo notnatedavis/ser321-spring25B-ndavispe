@@ -16,6 +16,11 @@ write a response back
 
 package funHttpServer;
 
+// imports for github
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.JSONException;
+
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
@@ -293,7 +298,7 @@ class WebServer {
               builder.append("HTTP/1.1 404 Not Found\n");
               builder.append("Content-Type: text/html; charset=utf-8\n");
               builder.append("\n");
-              builder.append("File not found: " + file);
+              builder.append("Error accessing GitHub API: Invalid query parameter");
             }
           }
         } else if (request.contains("bmi?")) { // 2.6.3
@@ -343,7 +348,7 @@ class WebServer {
             } catch (NumberFormatException e) {
               // invalid weight\height input
               builder.append("HTTP/1.1 400 Bad Request\n");
-              uilder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
               builder.append("\n");
               builder.append("Error: Invalid numeric values for weight (lbs) or height (inches)");
             }

@@ -59,5 +59,7 @@ Base Code, please use the following commands:
     For Client, run "gradle runClient -Phost=localhost -Pport=9099 -q --console=plain"
 ```   
 
+### Screencast
+(https://youtu.be/OYxZs3eqnOk)
 
 

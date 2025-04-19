@@ -28,7 +28,10 @@ Now you can run the client and server, please follow these instructions to start
 * NOTE: If for some reason the .txt files are causing the server or client to crash please either delete them or clear their contents.
   * Hasn't happened to me but, I wanted to make a note just in case someone comes across this!
 
-# Screencast :
+# Screencast : Task 1
+(https://youtu.be/OYxZs3eqnOk)
+
+# Screencast : Task 2
 (https://www.youtube.com/watch?v=dn-wp3vHKY8) 
 
 # Description & Operation : 

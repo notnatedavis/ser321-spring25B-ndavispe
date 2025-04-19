@@ -1,0 +1,78 @@
+apply plugin: 'application'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+   implementation group: 'org.json', name: 'json', version: '20200518'
+}
+
+//define main class
+mainClassName = 'Concentration'
+
+ext {
+  defaultPort = '8000'
+  defaultHost = 'localhost'
+}
+
+// Task 1 Server
+task runTask1(type: JavaExec) {
+  group 'server: task1'
+  description 'Creates Server socket waits for messages'
+  classpath = sourceSets.main.runtimeClasspath
+  main = 'taskone.Server'
+  standardInput = System.in // important
+  
+  // run with arguments e.g.
+  // gradle runTask1 -Pport=8000 -q --console=plain
+  // gradle runTask1 -q --console=plain
+  args(project.findProperty('port') ?: defaultPort)
+}
+
+// Task 2 ThreadedServer (boundless)
+task runTask2(type: JavaExec) {
+  group 'server: task2'
+  description 'Creates ThreadedServer socket waits for messages'
+  classpath = sourceSets.main.runtimeClasspath
+  main = 'taskone.ThreadedServer'
+  standardInput = System.in // important
+
+  // run with arguments e.g.
+  // gradle runTask2 -Pport=8000 -q --console=plain
+  // gradle runTask2 -q --console=plain
+  args(project.findProperty('port') ?: defaultPort)
+}
+
+// Task 3 ThreadedPoolServer (bounded)
+task runTask3(type: JavaExec) {
+  group 'server: task3'
+  description 'Creates ThreadedPoolServer socket waits for messages'
+  classpath = sourceSets.main.runtimeClasspath
+  main = 'taskone.ThreadedPoolServer'
+  standardInput = System.in // important
+
+  // run with arguments e.g.
+  // gradle runTask3 -q --console=plain (task 3 with default pool & port)
+  // gradle runTask3 -Pport=8000 -q --console=plain (task 3 with default pool)
+  // gradle runTask3 -Ppool=5 -q --console=plain (task 3 with default port)
+  // gradle runTask3 -Pport=8000 -Ppool=5 -q --console=plain (task 3 no defaults)
+  args = [
+          project.findProperty('port') ?: defaultPort,
+          project.findProperty('pool') ?: '2' // passed as string
+  ]
+}
+
+task runClient(type: JavaExec) {
+  group 'client'
+  description 'Creates client socket sends a message to the server'
+  classpath = sourceSets.main.runtimeClasspath
+  main = 'taskone.Client'
+  standardInput = System.in
+  
+  // run with arguments e.g.
+  // gradle runClient -Phost=localhost -Pport=8000 -q --console=plain
+  // gradle runClient -q --console=plain
+  args(project.findProperty('host') ?: defaultHost, project.findProperty('port') ?: defaultPort)
+}
+

@@ -1,0 +1,35 @@
+// This is a service that implements a book collection catalog proto file
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "service";
+option java_outer_classname = "LibraryProto";
+
+package services;
+
+import "google/protobuf/empty.proto";
+
+service LibraryService { // persistent data : books.txt
+  rpc addBook(Book) returns (BookID); // input : title, author
+  rpc findByGenre(GenreQuery) returns (Books); // input : genre
+}
+
+message BookID {
+  string id = 1;
+}
+
+message GenreQuery {
+  string genre = 1;
+}
+
+message Book {
+  string title = 1;
+  repeated string genres = 2;
+  int32 page_count = 3;
+  string isbn = 4; // unique identifier
+}
+
+message Books {
+  repeated Book books = 1;
+  int32 total_pages = 2;
+}

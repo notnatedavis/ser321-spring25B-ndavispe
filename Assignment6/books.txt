@@ -1,0 +1,5 @@
+46cd79d5-e0cf-4a76-8b7e-4eff94a1d2de|Harry Potter|Fantasy|190
+4b97d1bf-2b59-4657-8669-15bc309ede99|Trident|Action|12
+c7d88c8c-1db1-4e52-ab92-1dff61b55024|The Plague|horror|123
+4793e611-1c67-4a31-ac9b-3f9140fce5c7|Power|health|125
+dc98bb56-58eb-4bdc-8afe-864299469b49|Social Animal|health|335
